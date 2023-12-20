@@ -1,51 +1,37 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
-from streamlit.logger import get_logger
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-LOGGER = get_logger(__name__)
+# Load dataset
+url = "https://raw.githubusercontent.com/marceloreis/HTI/master/PRSA_Data_20130301-20170228/PRSA_Data_Aotizhongxin_20130301-20170228.csv"  # Gantilah dengan URL atau path lokal dataset Anda
+df = pd.read_csv(url)
 
+# Sidebar untuk memilih stasiun dan tahun
+st.sidebar.title("Filter Data")
+selected_station = st.sidebar.selectbox("Pilih Station:", df['station'].unique())
+selected_year = st.sidebar.selectbox("Pilih Tahun:", df['year'].unique())
 
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
+# Filter data berdasarkan stasiun dan tahun yang dipilih
+filtered_df = df[(df['station'] == selected_station) & (df['year'] == selected_year)]
 
-    st.write("# Welcome to Streamlit! 👋")
+# Judul dashboard
+st.title("Dashboard Analisis Data Cuaca / Kualitas Udara")
 
-    st.sidebar.success("Select a demo above.")
+# Visualisasi tingkat polusi udara berkaitan dengan faktor-faktor cuaca
+st.header("1. Hubungan Tingkat Polusi Udara dengan Faktor-faktor Cuaca")
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.scatterplot(data=filtered_df, x='TEMP', y='PM2.5', hue='RAIN', ax=ax)
+ax.set_title(f"Hubungan PM2.5 dengan Suhu dan Hujan ({selected_station}, {selected_year})")
+st.pyplot(fig)
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+# Visualisasi pola perubahan polusi udara seiring waktu
+st.header("2. Pola Perubahan Polusi Udara Seiring Waktu")
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.lineplot(data=filtered_df, x='hour', y='PM2.5', ax=ax)
+ax.set_title(f"Pola Perubahan PM2.5 Seiring Waktu ({selected_station}, {selected_year})")
+st.pyplot(fig)
 
-
-if __name__ == "__main__":
-    run()
+# Tampilkan tabel data
+st.header("Tabel Data")
+st.dataframe(filtered_df)
